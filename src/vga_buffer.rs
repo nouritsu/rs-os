@@ -3,6 +3,10 @@ use lazy_static::lazy_static;
 use spin::Mutex;
 use volatile::Volatile;
 
+const BUFFER_HEIGHT: usize = 25;
+const BUFFER_WIDTH: usize = 80;
+const VGA_BUF_ADDR: usize = 0xb8000;
+
 lazy_static! {
     pub static ref WRITER: Mutex<Writer> = Mutex::new(Writer {
         column_pos: 0,
@@ -11,23 +15,14 @@ lazy_static! {
     });
 }
 
-#[macro_export]
-macro_rules! print {
-    ($($arg:tt)*) => {
-        ($crate::vga_buffer::_print(format_args!($($arg)*)));
-    };
-}
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[repr(transparent)]
+struct ColourCode(u8);
 
-#[macro_export]
-macro_rules! println {
-    () => ($crate::print!("\n"));
-    ($($arg:tt)*) => ($crate::print!("{}\n", format_args!($($args)*)));
-}
-
-#[doc(hidden)]
-pub fn _print(args: fmt::Arguments) {
-    use core::fmt::Write;
-    WRITER.lock().write_fmt(args).unwrap();
+impl ColourCode {
+    fn new(fg: Colour, bg: Colour) -> Self {
+        ColourCode((bg as u8) << 4 | (fg as u8))
+    }
 }
 
 #[allow(dead_code)]
@@ -52,9 +47,16 @@ pub enum Colour {
     White,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct Writer {
+    column_pos: usize,
+    colour_code: ColourCode,
+    buffer: &'static mut Buffer,
+}
+
 #[repr(transparent)]
-struct ColourCode(u8);
+struct Buffer {
+    chars: [[Volatile<ScreenChar>; BUFFER_WIDTH]; BUFFER_HEIGHT],
+}
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[repr(C)]
@@ -63,25 +65,23 @@ struct ScreenChar {
     colour_code: ColourCode,
 }
 
-const BUFFER_HEIGHT: usize = 25;
-const BUFFER_WIDTH: usize = 80;
-const VGA_BUF_ADDR: usize = 0xb8000;
-
-#[repr(transparent)]
-struct Buffer {
-    chars: [[Volatile<ScreenChar>; BUFFER_WIDTH]; BUFFER_HEIGHT],
+#[macro_export]
+macro_rules! print {
+    ($($arg:tt)*) => {
+        ($crate::vga_buffer::_print(format_args!($($arg)*)));
+    };
 }
 
-pub struct Writer {
-    column_pos: usize,
-    colour_code: ColourCode,
-    buffer: &'static mut Buffer,
+#[macro_export]
+macro_rules! println {
+    () => ($crate::print!("\n"));
+    ($($arg:tt)*) => ($crate::print!("{}\n", format_args!($($arg)*)));
 }
 
-impl ColourCode {
-    fn new(fg: Colour, bg: Colour) -> Self {
-        ColourCode((bg as u8) << 4 | (fg as u8))
-    }
+#[doc(hidden)]
+pub fn _print(args: fmt::Arguments) {
+    use core::fmt::Write;
+    WRITER.lock().write_fmt(args).unwrap();
 }
 
 impl fmt::Write for Writer {

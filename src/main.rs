@@ -7,20 +7,7 @@ mod vga_buffer;
 
 #[no_mangle]
 pub extern "C" fn _start() -> ! {
-    use core::fmt::Write;
-
-    vga_buffer::WRITER
-        .lock()
-        .write_str("Hello Thread-Safe Mutability!")
-        .unwrap();
-
-    write!(
-        vga_buffer::WRITER.lock(),
-        "Here are some numbers: {} and {}",
-        42.0,
-        3.14159
-    )
-    .unwrap();
+    println!("Hello println! Here is a number {}", "45");
 
     loop {}
 }
