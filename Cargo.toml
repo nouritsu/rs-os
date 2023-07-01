@@ -4,4 +4,5 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-bootloader = "0.9.23" #Latest version fails to compile
+bootloader = "0.9.23" #Later versions fail to compile
+volatile = "0.2.6" #Later versions will not work as intended
