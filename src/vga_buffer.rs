@@ -1,5 +1,15 @@
 use core::fmt;
+use lazy_static::lazy_static;
+use spin::Mutex;
 use volatile::Volatile;
+
+lazy_static! {
+    pub static ref WRITER: Mutex<Writer> = Mutex::new(Writer {
+        column_pos: 0,
+        colour_code: ColourCode::new(Colour::Yellow, Colour::Black),
+        buffer: unsafe { &mut *(VGA_BUF_ADDR as *mut Buffer) },
+    });
+}
 
 #[allow(dead_code)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -114,18 +124,4 @@ impl Writer {
             self.buffer.chars[row][col].write(blank);
         }
     }
-}
-
-pub fn print_test() {
-    use core::fmt::Write;
-
-    let mut writer = Writer {
-        column_pos: 0,
-        colour_code: ColourCode::new(Colour::Yellow, Colour::Black),
-        buffer: unsafe { &mut *(VGA_BUF_ADDR as *mut Buffer) },
-    };
-
-    writer.write_byte(b'H');
-    writer.write_string("ello! ");
-    write!(writer, "The numbers are {} and {}", 42, 1.0 / 3.0).unwrap();
 }
