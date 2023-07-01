@@ -1,3 +1,4 @@
+use core::fmt;
 use volatile::Volatile;
 
 #[allow(dead_code)]
@@ -48,21 +49,16 @@ pub struct Writer {
     buffer: &'static mut Buffer,
 }
 
-pub fn print_test() {
-    let mut writer = Writer {
-        column_pos: 0,
-        colour_code: ColourCode::new(Colour::Yellow, Colour::Black),
-        buffer: unsafe { &mut *(VGA_BUF_ADDR as *mut Buffer) },
-    };
-
-    writer.write_byte(b'H');
-    writer.write_string("ello ");
-    writer.write_string("Wörld!");
-}
-
 impl ColourCode {
     fn new(fg: Colour, bg: Colour) -> Self {
         ColourCode((bg as u8) << 4 | (fg as u8))
+    }
+}
+
+impl fmt::Write for Writer {
+    fn write_str(&mut self, s: &str) -> fmt::Result {
+        self.write_string(s);
+        Ok(())
     }
 }
 
@@ -100,4 +96,18 @@ impl Writer {
     fn new_line(&mut self) {
         todo!()
     }
+}
+
+pub fn print_test() {
+    use core::fmt::Write;
+
+    let mut writer = Writer {
+        column_pos: 0,
+        colour_code: ColourCode::new(Colour::Yellow, Colour::Black),
+        buffer: unsafe { &mut *(VGA_BUF_ADDR as *mut Buffer) },
+    };
+
+    writer.write_byte(b'H');
+    writer.write_string("ello! ");
+    write!(writer, "The numbers are {} and {}", 42, 1.0 / 3.0).unwrap();
 }
