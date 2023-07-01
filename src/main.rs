@@ -8,6 +8,15 @@ use core::panic::PanicInfo;
 
 mod vga_buffer;
 
+const IOBASE_IS_A_DEBUG_EXIT: u16 = 0xf4;
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[repr(u32)]
+pub enum QemuExitCode {
+    Success = 0x10,
+    Failed = 0x11,
+}
+
 #[no_mangle]
 pub extern "C" fn _start() -> ! {
     println!("Hello World!");
@@ -18,12 +27,30 @@ pub extern "C" fn _start() -> ! {
     loop {}
 }
 
+pub fn exit_qemu(code: QemuExitCode) {
+    use x86_64::instructions::port::Port;
+
+    unsafe {
+        let mut port = Port::new(IOBASE_IS_A_DEBUG_EXIT);
+        port.write(code as u32);
+    }
+}
+
+#[panic_handler]
+fn panic(info: &PanicInfo) -> ! {
+    println!("{}", info);
+    loop {}
+}
+
+/* TESTS */
 #[cfg(test)]
 fn test_runner(tests: &[&dyn Fn()]) {
     println!("Running {} tests", tests.len());
     for test in tests {
         test();
     }
+
+    exit_qemu(QemuExitCode::Success);
 }
 
 #[test_case]
@@ -31,10 +58,4 @@ fn trivial_assertion() {
     print!("trivial assertion...");
     assert_eq!(1, 1);
     println!("[ok]");
-}
-
-#[panic_handler]
-fn panic(info: &PanicInfo) -> ! {
-    println!("{}", info);
-    loop {}
 }
