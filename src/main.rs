@@ -6,6 +6,7 @@
 
 use core::panic::PanicInfo;
 
+mod serial;
 mod vga_buffer;
 
 const IOBASE_IS_A_DEBUG_EXIT: u16 = 0xf4;
@@ -36,26 +37,34 @@ pub fn exit_qemu(code: QemuExitCode) {
     }
 }
 
+#[cfg(not(test))]
 #[panic_handler]
 fn panic(info: &PanicInfo) -> ! {
     println!("{}", info);
     loop {}
 }
 
-/* TESTS */
+#[cfg(test)]
+#[panic_handler]
+fn panic(info: &PanicInfo) -> ! {
+    serial_println!("[failed]\n");
+    serial_println!("Error: {}\n", info);
+    exit_qemu(QemuExitCode::Failed);
+    loop {}
+}
+
+/* TEST HANDLER */
 #[cfg(test)]
 fn test_runner(tests: &[&dyn Fn()]) {
-    println!("Running {} tests", tests.len());
+    serial_println!("Running {} tests", tests.len());
     for test in tests {
         test();
     }
-
     exit_qemu(QemuExitCode::Success);
 }
 
+/* TESTS */
 #[test_case]
-fn trivial_assertion() {
-    print!("trivial assertion...");
+fn test_trivial_assertion() {
     assert_eq!(1, 1);
-    println!("[ok]");
 }
