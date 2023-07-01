@@ -144,3 +144,26 @@ impl Writer {
         }
     }
 }
+
+/* TESTS */
+#[test_case]
+fn test_println_simple() {
+    println!("Hello println Test!");
+}
+
+#[test_case]
+fn test_println_multiple() {
+    for _ in 0..200 {
+        println!("Printing...");
+    }
+}
+
+#[test_case]
+fn test_println_output() {
+    let s = "This string fits on a single line.";
+    println!("{}", s);
+    for (i, c) in s.chars().enumerate() {
+        let sc = WRITER.lock().buffer.chars[BUFFER_HEIGHT - 2][i].read();
+        assert_eq!(char::from(sc.ascii_char), c);
+    }
+}
