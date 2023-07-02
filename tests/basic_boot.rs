@@ -9,23 +9,17 @@ use rs_os::println;
 
 #[no_mangle]
 pub extern "C" fn _start() -> ! {
-    println!("Hello World{}", "!");
-
-    #[cfg(test)]
     test_main();
-
     loop {}
 }
 
-#[cfg(not(test))]
 #[panic_handler]
 fn panic(info: &PanicInfo) -> ! {
-    println!("{}", info);
-    loop {}
+    rs_os::test_panic_handler(info);
 }
 
-#[cfg(test)]
-#[panic_handler]
-fn panic(info: &PanicInfo) -> ! {
-    rs_os::test_panic_handler(info)
+/* TESTS */
+#[test_case]
+fn test_println() {
+    println!("println! works!")
 }
