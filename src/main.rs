@@ -12,7 +12,11 @@ pub extern "C" fn _start() -> ! {
     println!("Hello World{}", "!");
 
     rs_os::init();
-    x86_64::instructions::interrupts::int3(); //invoke breakpoint exception
+
+    //invoke page fault
+    unsafe {
+        *(0xdeadbeef as *mut u8) = 69;
+    }
 
     #[cfg(test)]
     test_main();
