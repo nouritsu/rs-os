@@ -28,6 +28,10 @@ pub extern "C" fn _start() -> ! {
     loop {}
 }
 
+pub fn init() {
+    interrupts::init_idt();
+}
+
 pub fn exit_qemu(exit_code: QemuExitCode) {
     use x86_64::instructions::port::Port;
 
