@@ -13,11 +13,6 @@ pub extern "C" fn _start() -> ! {
 
     rs_os::init();
 
-    //invoke page fault
-    unsafe {
-        *(0xdeadbeef as *mut u8) = 69;
-    }
-
     #[cfg(test)]
     test_main();
 
