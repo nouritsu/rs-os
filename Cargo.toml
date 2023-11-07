@@ -13,11 +13,12 @@ harness = false
 
 
 [dependencies]
-bootloader = "0.9.23" #Later versions fail to compile
-volatile = "0.2.6" #Later versions will not work as intended
+bootloader = "0.9.23" # Later versions fail to compile
+volatile = "0.2.6"    # Later versions will not work as intended
 spin = "0.9.8"
 x86_64 = "0.14.2"
 uart_16550 = "0.2.0"
+pic8259 = "0.10.4"
 
 [dependencies.lazy_static]
 version = "1.0"
@@ -25,8 +26,12 @@ features = ["spin_no_std"]
 
 [package.metadata.bootimage]
 test-args = [
-    "-device", "isa-debug-exit,iobase=0xf4,iosize=0x04", "-serial", "stdio",
-    "-display", "none"
+    "-device",
+    "isa-debug-exit,iobase=0xf4,iosize=0x04",
+    "-serial",
+    "stdio",
+    "-display",
+    "none",
 ]
 test-success-exit-code = 33 # (0x10 << 1) | 1 = 32
 test-timeout = 300 # seconds

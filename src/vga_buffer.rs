@@ -81,7 +81,10 @@ macro_rules! println {
 #[doc(hidden)]
 pub fn _print(args: fmt::Arguments) {
     use core::fmt::Write;
+    use x86_64::instructions::interrupts;
+
     WRITER.lock().write_fmt(args).unwrap();
+    interrupts::without_interrupts(|| WRITER.lock().write_fmt(args).unwrap());
 }
 
 impl fmt::Write for Writer {
@@ -160,10 +163,17 @@ fn test_println_multiple() {
 
 #[test_case]
 fn test_println_output() {
+    use core::fmt::Write;
+    use x86_64::instructions::interrupts;
+
     let s = "This string fits on a single line.";
-    println!("{}", s);
-    for (i, c) in s.chars().enumerate() {
-        let sc = WRITER.lock().buffer.chars[BUFFER_HEIGHT - 2][i].read();
-        assert_eq!(char::from(sc.ascii_char), c);
-    }
+    interrupts::without_interrupts(|| {
+        println!("{}", s);
+        let mut writer = WRITER.lock();
+        writeln!(writer, "\n{}", s).expect("writeln failed");
+        for (i, c) in s.chars().enumerate() {
+            let sc = WRITER.lock().buffer.chars[BUFFER_HEIGHT - 2][i].read();
+            assert_eq!(char::from(sc.ascii_char), c);
+        }
+    });
 }

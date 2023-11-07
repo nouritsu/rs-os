@@ -1,22 +1,21 @@
+// https://os.phil-opp.com/hardware-interrupts/#the-hlt-instruction
 #![no_std]
 #![no_main]
 #![feature(custom_test_frameworks)]
 #![test_runner(rs_os::test_runner)]
 #![reexport_test_harness_main = "test_main"]
-
 use core::panic::PanicInfo;
 use rs_os::println;
 
 #[no_mangle]
 pub extern "C" fn _start() -> ! {
-    println!("Hello World{}", "!");
-
+    println!("Hello World!");
     rs_os::init();
 
     #[cfg(test)]
     test_main();
 
-    println!("Ok.");
+    println!("It did not crash!");
     loop {}
 }
 
